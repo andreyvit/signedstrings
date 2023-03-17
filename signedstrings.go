@@ -6,6 +6,7 @@ import (
 	"crypto/subtle"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -34,6 +35,9 @@ var (
 	// do not pass signature validation (ie have been corrupted or tampered with).
 	InvalidSig = errors.New("invalid signature")
 )
+
+// Minimum acceptable secure length of **fully random** keys.
+const MinKeyLen = 32
 
 // Sign signs the given string (and adds a configured prefix if any).
 func (conf *Configuration) Sign(data string) string {
@@ -85,6 +89,8 @@ func (conf *Configuration) sanityCheck() {
 	for _, key := range conf.Keys {
 		if len(key) == 0 {
 			panic("signedstrings: empty key")
+		} else if len(key) < MinKeyLen {
+			panic("signedstrings: short key")
 		}
 	}
 }
@@ -110,6 +116,9 @@ func ParseKeys(s string) (Keys, error) {
 		key, err := hex.DecodeString(ks)
 		if err != nil {
 			return nil, err
+		}
+		if len(key) < MinKeyLen {
+			return nil, fmt.Errorf("%d-byte key is too short, need at least %d bytes", len(key), MinKeyLen)
 		}
 		keys = append(keys, key)
 	}

@@ -9,20 +9,22 @@ import (
 	"github.com/andreyvit/signedstrings"
 )
 
+var exampleKey = must(hex.DecodeString("d850af431064164d9a73891fa0a257ba91e5cb18a67de07d3507b8ccdc8781c2"))
+
 func Example_token() {
 	conf := signedstrings.Configuration{
-		Keys:     [][]byte{[]byte("hello world")},
+		Keys:     [][]byte{exampleKey},
 		Prefixes: []string{"TOKEN-"},
 	}
 
 	fmt.Println(conf.Sign("foo"))
 
-	print(conf.Validate("TOKEN-foo-1c54d5a9d70312670528e4046ccdad77d97dcd2bcccdc161f25dd63dd7c97a1e"))
+	print(conf.Validate("TOKEN-foo-4bc019e2218479926f27694a281b8b2af30f86f5f522d0bbde31ab19bc730f39"))
 
 	print(conf.Validate(""))
-	print(conf.Validate("foo-1c54d5a9d70312670528e4046ccdad77d97dcd2bcccdc161f25dd63dd7c97a1e"))
+	print(conf.Validate("foo-4bc019e2218479926f27694a281b8b2af30f86f5f522d0bbde31ab19bc730f39"))
 	print(conf.Validate("TOKEN-foo-1111111111111111111111111111111111111111111111111111111111111111"))
-	// Output: TOKEN-foo-1c54d5a9d70312670528e4046ccdad77d97dcd2bcccdc161f25dd63dd7c97a1e
+	// Output: TOKEN-foo-4bc019e2218479926f27694a281b8b2af30f86f5f522d0bbde31ab19bc730f39
 	// foo
 	// err: invalid string
 	// err: invalid string
@@ -31,19 +33,19 @@ func Example_token() {
 
 func Example_plain() {
 	conf := signedstrings.Configuration{
-		Keys: [][]byte{[]byte("hello world")},
+		Keys: [][]byte{exampleKey},
 		Sep:  " :: ",
 	}
 
 	fmt.Println(conf.Sign("some text to sign"))
 
-	print(conf.Validate("some text to sign :: 3fa50b5e152cc7eeb37bd0f9e9e4bb61ee3c31939e97f020fb154f3a01cfd441"))
+	print(conf.Validate("some text to sign :: 2f9a0cb84617f6e394a22068504f59ba3e7903c4dc1fd995cc4a940ffeef90d8"))
 
 	print(conf.Validate(" :: "))
 	print(conf.Validate("some text to sign"))
 	print(conf.Validate("some text to sign :: 1111111111111111111111111111111111111111111111111111111111111111"))
 
-	// Output: some text to sign :: 3fa50b5e152cc7eeb37bd0f9e9e4bb61ee3c31939e97f020fb154f3a01cfd441
+	// Output: some text to sign :: 2f9a0cb84617f6e394a22068504f59ba3e7903c4dc1fd995cc4a940ffeef90d8
 	// some text to sign
 	// err: invalid string
 	// err: invalid string
@@ -52,7 +54,7 @@ func Example_plain() {
 
 func ExampleParseKeys() {
 	// WARNING: use longer keys, these are very short, for demonstration only
-	keys, err := signedstrings.ParseKeys("787653b737a07fa0 d5d73e9d64076e18,,,81b5a01659b74a84")
+	keys, err := signedstrings.ParseKeys("d850af431064164d9a73891fa0a257ba91e5cb18a67de07d3507b8ccdc8781c2 65ce238cb1b11d17a00c94c875394f500b05abd24c276a01691bdf9ce00d213c,,,283d54389c394ed33ba4146eff7b4133f7e393cb905d089a06798456a1cb7dcd")
 	if err != nil {
 		panic(err)
 	}
@@ -62,20 +64,22 @@ func ExampleParseKeys() {
 	fmt.Println(hex.EncodeToString(keys[2]))
 
 	print(signedstrings.ParseKeys("zzz"))
+	print(signedstrings.ParseKeys("d850"))
 
-	// Output: 787653b737a07fa0
-	// d5d73e9d64076e18
-	// 81b5a01659b74a84
+	// Output: d850af431064164d9a73891fa0a257ba91e5cb18a67de07d3507b8ccdc8781c2
+	// 65ce238cb1b11d17a00c94c875394f500b05abd24c276a01691bdf9ce00d213c
+	// 283d54389c394ed33ba4146eff7b4133f7e393cb905d089a06798456a1cb7dcd
 	// err: encoding/hex: invalid byte: U+007A 'z'
+	// err: 2-byte key is too short, need at least 32 bytes
 }
 
 func ExampleKeys() {
 	var keys signedstrings.Keys
 	flags := flag.NewFlagSet("", flag.PanicOnError)
 	flags.Var(&keys, "keys", "explanation")
-	flags.Parse([]string{"-keys", "787653b737a07fa0,d5d73e9d64076e18"})
+	flags.Parse([]string{"-keys", "d850af431064164d9a73891fa0a257ba91e5cb18a67de07d3507b8ccdc8781c2,65ce238cb1b11d17a00c94c875394f500b05abd24c276a01691bdf9ce00d213c"})
 	fmt.Println(keys)
-	// Output: 787653b737a07fa0 d5d73e9d64076e18
+	// Output: d850af431064164d9a73891fa0a257ba91e5cb18a67de07d3507b8ccdc8781c2 65ce238cb1b11d17a00c94c875394f500b05abd24c276a01691bdf9ce00d213c
 }
 
 func TestSanityCheck_noKeys(t *testing.T) {
@@ -88,12 +92,22 @@ func TestSanityCheck_noKeys(t *testing.T) {
 func TestSanityCheck_emptyKey(t *testing.T) {
 	conf := signedstrings.Configuration{
 		Keys: [][]byte{
-			{1, 2, 3, 4},
+			exampleKey,
 			{},
-			{5, 6, 7, 8},
 		},
 	}
 	assertPanic(t, "signedstrings: empty key", func() {
+		conf.Sign("foo")
+	})
+}
+
+func TestSanityCheck_shortKey(t *testing.T) {
+	conf := signedstrings.Configuration{
+		Keys: [][]byte{
+			{1, 2, 3, 4},
+		},
+	}
+	assertPanic(t, "signedstrings: short key", func() {
 		conf.Sign("foo")
 	})
 }
@@ -116,4 +130,11 @@ func assertPanic(t testing.TB, msg string, f func()) {
 		}
 	}()
 	f()
+}
+
+func must[T any](v T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return v
 }

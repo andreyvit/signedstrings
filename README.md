@@ -1,7 +1,7 @@
 Go HMAC-SHA256 signing
 ======================
 
-[![Go reference](https://pkg.go.dev/badge/github.com/andreyvit/signedstrings.svg)](https://pkg.go.dev/github.com/andreyvit/signedstrings) ![zero dependencies](https://img.shields.io/badge/deps-zero-brightgreen) ![under 150 LOC](https://img.shields.io/badge/size-%3C200%20LOC-green) ![great coverage](https://img.shields.io/badge/coverage-98%25-green) [![Go report card](https://goreportcard.com/badge/github.com/andreyvit/signedstrings)](https://goreportcard.com/report/github.com/andreyvit/signedstrings)
+[![Go reference](https://pkg.go.dev/badge/github.com/andreyvit/signedstrings.svg)](https://pkg.go.dev/github.com/andreyvit/signedstrings) ![zero dependencies](https://img.shields.io/badge/deps-zero-brightgreen) ![under 150 LOC](https://img.shields.io/badge/size-%3C150%20LOC-green) ![great coverage](https://img.shields.io/badge/coverage-98%25-green) [![Go report card](https://goreportcard.com/badge/github.com/andreyvit/signedstrings)](https://goreportcard.com/report/github.com/andreyvit/signedstrings)
 
 
 Why?
@@ -58,6 +58,24 @@ data, err := conf.Validate(signed)
 ```
 
 IMPORTANT: `signedstrings` does NOT add a timestamp or a random nonce, and will always return the same string given the same inputs. This will enable replay attacks in certain use cases. As a professional, you are expected to know what you're doing when using security primitives, HMAC-SHA256 included. If you don't, you REALLY should not be writing security-sensitive code, sorry.
+
+
+Generating Keys & Choosing Key Length
+-------------------------------------
+
+I recommend 64-byte fully random keys. Generate via `openssl rand -hex 64`. This is the maximum key size supported by HMAC-SHA256; anything longer will be hashed down to a 32-byte key, so don't use longer keys.
+
+[StackOverflow says 32 bytes are enough](https://crypto.stackexchange.com/a/34866), though, if you prefer a shorter key.
+
+IMPORTANT: Note the _fully random_ part. The key should come from a cryptographically secure random number generator like `crypto/rand` or `openssl rand`. Depending on your use case, you might get away with using a non-random key, but in that case, please make sure you know what you are doing. Ditto for other key lengths.
+
+
+Key & Prefix Rotation
+---------------------
+
+You can specify multiple keys and multiple prefixes in your configuration, they will all be accepted for validation. The first key and the first prefix are used to sign new messages. This means you can add a new key or a new prefix while continuing to support prior ones.
+
+Again, note that it's the _first_ key and the _first_ prefix that is used for new signatures. You are supposed to insert keys to the front of the list.
 
 
 Contributing
