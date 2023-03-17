@@ -36,8 +36,9 @@ var (
 	InvalidSig = errors.New("invalid signature")
 )
 
-// Minimum acceptable secure length of **fully random** keys.
-const MinKeyLen = 32
+// Minimum acceptable length of secure **fully random** keys.
+// Note that this is a variable, so you can adjust it if desired.
+var MinKeyLen = 32
 
 // Sign signs the given string (and adds a configured prefix if any).
 func (conf *Configuration) Sign(data string) string {

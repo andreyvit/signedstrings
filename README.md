@@ -24,7 +24,7 @@ Sometimes, though, you also want:
 * key rotation support;
 * parsing of the keys;
 * parsing of the signed messages (`strings.CutLast` would be so nice to have);
-* sanity checks to avoid signing something with an empty key due to misconfiguration;
+* sanity checks to avoid signing something with an empty or short key due to misconfiguration;
 * maybe even adding a prefix to identify the tokens (for security leak prevention, log sanitization and input sanity checking purposes);
 
 ...all without littering your code with these uninteresting details. That's where `signedstrings` comes in, a tiny utility library.
@@ -68,6 +68,12 @@ I recommend 64-byte fully random keys. Generate via `openssl rand -hex 64`. This
 [StackOverflow says 32 bytes are enough](https://crypto.stackexchange.com/a/34866), though, if you prefer shorter keys.
 
 IMPORTANT: Note the _fully random_ part. The key should come from a cryptographically secure random number generator like `crypto/rand` or `openssl rand`. Depending on your use case, you might get away with using a non-random key, but in that case, please make sure you know what you are doing. Ditto for other key lengths.
+
+As a secure default, this library will panic when encountering keys shorter than 32 bytes. If you truly want to use shorter keys, adjust the minimum key length:
+
+```go
+signedstrings.MinKeyLen = 4  // live dangerously
+```
 
 
 Key & Prefix Rotation
