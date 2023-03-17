@@ -29,10 +29,10 @@ type Configuration struct {
 }
 
 var (
-	// Invalid is the error returning for incorrectly formatted signed messages.
+	// Invalid is the error returned for incorrectly formatted messages.
 	Invalid = errors.New("invalid string")
-	// InvalidSig is the error returned for correctly formatted signed messages that
-	// do not pass signature validation (ie have been corrupted or tampered with).
+	// InvalidSig is the error returned for correctly formatted messages that
+	// fail signature validation (i.e. have been corrupted or tampered with).
 	InvalidSig = errors.New("invalid signature")
 )
 
