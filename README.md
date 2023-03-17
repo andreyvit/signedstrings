@@ -23,7 +23,7 @@ Sometimes, though, you also want:
 
 * key rotation support;
 * parsing of the keys;
-* parsing of the signed message (`strings.CutLast` would be so nice to have);
+* parsing of the signed messages (`strings.CutLast` would be so nice to have);
 * sanity checks to avoid signing something with an empty key due to misconfiguration;
 * maybe even adding a prefix to identify the tokens (for security leak prevention, log sanitization and input sanity checking purposes);
 
@@ -65,7 +65,7 @@ Generating Keys & Choosing Key Length
 
 I recommend 64-byte fully random keys. Generate via `openssl rand -hex 64`. This is the maximum key size supported by HMAC-SHA256; anything longer will be hashed down to a 32-byte key, so don't use longer keys.
 
-[StackOverflow says 32 bytes are enough](https://crypto.stackexchange.com/a/34866), though, if you prefer a shorter key.
+[StackOverflow says 32 bytes are enough](https://crypto.stackexchange.com/a/34866), though, if you prefer shorter keys.
 
 IMPORTANT: Note the _fully random_ part. The key should come from a cryptographically secure random number generator like `crypto/rand` or `openssl rand`. Depending on your use case, you might get away with using a non-random key, but in that case, please make sure you know what you are doing. Ditto for other key lengths.
 
