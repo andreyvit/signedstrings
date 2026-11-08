@@ -1,7 +1,7 @@
 Go HMAC-SHA256 signing
 ======================
 
-[![Go reference](https://pkg.go.dev/badge/github.com/andreyvit/signedstrings.svg)](https://pkg.go.dev/github.com/andreyvit/signedstrings) ![zero dependencies](https://img.shields.io/badge/deps-zero-brightgreen) ![under 150 LOC](https://img.shields.io/badge/size-%3C150%20LOC-green) ![great coverage](https://img.shields.io/badge/coverage-98%25-green) [![Go report card](https://goreportcard.com/badge/github.com/andreyvit/signedstrings)](https://goreportcard.com/report/github.com/andreyvit/signedstrings)
+[![Go reference](https://pkg.go.dev/badge/github.com/andreyvit/signedstrings.svg)](https://pkg.go.dev/github.com/andreyvit/signedstrings) ![zero dependencies](https://img.shields.io/badge/deps-zero-brightgreen) [![Go report card](https://goreportcard.com/badge/github.com/andreyvit/signedstrings)](https://goreportcard.com/report/github.com/andreyvit/signedstrings)
 
 
 Why?
@@ -29,11 +29,13 @@ Sometimes, though, you also want:
 
 ...all without littering your code with these uninteresting details. That's where `signedstrings` comes in, a tiny utility library.
 
-IMPORTANT: `signedstrings` does NOT add a timestamp or a random nonce, and will always return the same string given the same inputs. This will enable replay attacks in certain use cases. As a professional, you are expected to know what you're doing when using security primitives, HMAC-SHA256 included. If you don't, you REALLY should not be writing security-sensitive code, sorry.
+
 
 
 Usage
 -----
+
+Signing provides integrity, not confidentiality: the original value remains readable. Tokens have no built-in expiry or replay protection. Include and validate an expiry, and track a nonce for one-time actions.
 
 Install:
 
@@ -42,28 +44,40 @@ Install:
 Use:
 
 ```go
-conf := &signedstrings.Configuration{
-    Prefixes: []string{"MYAPPTOKEN-"}, // optional!
+package main
+
+import (
+	"crypto/rand"
+	"fmt"
+
+	"github.com/andreyvit/signedstrings"
+)
+
+func main() {
+	// Demo key: store a persistent random key securely for real tokens.
+	key := make([]byte, 64)
+	if _, err := rand.Read(key); err != nil {
+		panic(err)
+	}
+	conf := &signedstrings.Configuration{
+		Keys: signedstrings.Keys{key}, Prefixes: []string{"MYAPPTOKEN-"},
+	}
+	signed := conf.Sign("foo")
+	data, err := conf.Validate(signed)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(data) // foo
 }
-flag.Var(&conf.Keys, "signing-keys", "key(s) for signed tokens") // or envflag.Var
-
-...
-signed := conf.Sign("foo")
-// MYAPPTOKEN-foo-1c54...7a1e
-
-...
-data, err := conf.Validate(signed)
-// data == "foo"
-// errors: signedstrings.Invalid, signedstrings.InvalidSig
 ```
 
-IMPORTANT: `signedstrings` does NOT add a timestamp or a random nonce, and will always return the same string given the same inputs. This will enable replay attacks in certain use cases. As a professional, you are expected to know what you're doing when using security primitives, HMAC-SHA256 included. If you don't, you REALLY should not be writing security-sensitive code, sorry.
+
 
 
 Generating Keys & Choosing Key Length
 -------------------------------------
 
-I recommend 64-byte fully random keys. Generate via `openssl rand -hex 64`. This is the maximum key size supported by HMAC-SHA256; anything longer will be hashed down to a 32-byte key, so don't use longer keys.
+I recommend 64-byte fully random keys. Generate via `openssl rand -hex 64`. Keys longer than SHA-256’s 64-byte block size are hashed to 32 bytes by HMAC.
 
 [StackOverflow says 32 bytes are enough](https://crypto.stackexchange.com/a/34866), though, if you prefer shorter keys.
 
